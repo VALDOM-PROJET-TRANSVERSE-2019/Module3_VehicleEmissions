@@ -5,3 +5,7 @@ This year (2019/2020) the goal of the project is to develop a video analysis ser
 
 # Module3_VehicleEmissions
 The purpose of this module is to identify the CO2 emissions of each vehicle in road traffic.
+
+Team:
+Loic Meynard
+Valentin Maupin
