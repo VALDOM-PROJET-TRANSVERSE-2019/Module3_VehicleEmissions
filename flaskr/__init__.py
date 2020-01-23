@@ -1,4 +1,5 @@
 import os
+
 from flask import Flask
 
 
@@ -8,6 +9,7 @@ def create_app(test_config=None):
     app.config.from_mapping(
         SECRET_KEY='dev',
         DATABASE=os.path.join(app.instance_path, 'flaskr.sqlite'),
+        MONGO_URI="mongodb://localhost:27017/myDatabase"
     )
 
     if test_config is None:
