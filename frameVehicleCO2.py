@@ -1,22 +1,22 @@
 class FrameVehicleCo2:
     """
-        Contour(contour_id=int, pos=int, vehicle_type=string, frame_id=int)
+        FrameVehicleCo2(frame_id=int, contour_id=int, vehicle_type=string, emission=float)
 
-            Object representing the bounding box of a detected vehicle from an image.
+            Object containing the calculated data of a vehicle.
 
             Parameters
             ----------
-            contour_id : int
-                Id of the bounding box
-            pos : tuple of 4 ints (x1, y1, x2, y2)
-                Coordinate of the two points defining the bounding box
-            vehicle_type : string
-                Type of vehicle (car, truck, bus, motorcycle...)
             frame_id : int
                 Id of the frame
+            contour_id : int
+                Id of the bounding box
+            type_vehicle : String
+                Detected vehicle type/model
+            emission : float
+                CO2 emission output of the vehicle in gram
         """
     def __init__(self, frame_id, contour_id, type_vehicle, emission):
-        self.contour_id = contour_id
         self.frame_id = frame_id
+        self.contour_id = contour_id
         self.type_vehicle = type_vehicle
         self.emission = emission
