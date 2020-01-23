@@ -6,6 +6,14 @@ This year (2019/2020) the goal of the project is to develop a video analysis ser
 # Module3_VehicleEmissions
 The purpose of this module is to identify the CO2 emissions of each vehicle in road traffic.
 
+# Interface
+## Inputs
+- frames_path: a string with the path where are the frames which will be used to process
+- frame_contours: the list containing the bounding boxes computed bu module 2
+
+## Output
+- frames_vehicles_co2: a list of frame_vehicles_co2 objects containing the CO2 information for each frame
+
 Team:
-Loic Meynard
+Loïc Meynard
 Valentin Maupin
