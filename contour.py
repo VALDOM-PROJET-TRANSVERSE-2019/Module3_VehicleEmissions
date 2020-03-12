@@ -15,6 +15,7 @@ class Contour:
             vehicle_type : string
                 Type of vehicle (car, truck, bus, motorcycle...)
         """
+
     def __init__(self, frame_id, contour_id, pos, vehicle_type):
         self.frame_id = frame_id
         self.contour_id = contour_id
