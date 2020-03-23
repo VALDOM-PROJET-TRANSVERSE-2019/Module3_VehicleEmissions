@@ -1,3 +1,5 @@
+from PIL import Image
+
 class Contour:
     """
         Contour(frame_id=int, contour_id=int, pos=int, vehicle_type=string)
@@ -22,6 +24,10 @@ class Contour:
         self.pos = pos
         self.vehicle_type = vehicle_type
 
+    # crop an img of type Image (from PIL)
+    def crop_image(self, image):
+        return image.crop(self.pos)
+	
     def get_pos(self):
         return self.pos[0], self.pos[1], self.pos[2], self.pos[3]
 
