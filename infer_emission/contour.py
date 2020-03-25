@@ -37,3 +37,13 @@ class Contour:
 
     def get_id_frame(self):
         return self.frame_id
+
+    # crop a list of img
+    # list_path contain paths of list_contour img
+    # return an array of cropped images (to save or to feed NN)
+    def crop_images(list_contour, list_path):
+        arr_cropped = []
+        for i in range(len(list_contour)):
+            im = Image.open(list_path[i])
+            arr_cropped.append(list_contour[i].crop_image(im))
+        return arr_cropped
