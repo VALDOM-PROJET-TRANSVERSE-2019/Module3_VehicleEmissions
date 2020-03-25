@@ -1,11 +1,11 @@
 import numpy as np
 # Deep Learning Librairies
-import tensorflow as tf
 import tensorflow.keras.applications as ka
 import tensorflow.keras.layers as kl
+import tensorflow.keras.models as km
+import tensorflow.keras.preprocessing.image as kpi
 from tensorflow.compat.v1 import ConfigProto
 from tensorflow.compat.v1 import InteractiveSession
-import tensorflow.keras.preprocessing.image as kpi
 from tensorflow_core.python.keras.engine.network import Network
 
 # Constants importation
@@ -25,52 +25,107 @@ class Co2Inference:
         self.config = ConfigProto()
         self.config.gpu_options.allow_growth = True
         self.session = InteractiveSession(config=self.config)
+
+        # model initialization
+        self.base_model_class = ka.InceptionResNetV2
         self.model: Network = None
         self.init_model()
 
+        self.threshold = cst.ACC_THRESHOLD
+
     def init_model(self, pretrained_model=ka.ResNet50V2, output_fct='relu'):
-        input_tensor = tf.keras.Input(shape=cst.IMG_SHAPE)
+        self._get_assembled_model(load_weights=True)
 
-        # create the base pre-trained model
-        base_model = pretrained_model(input_tensor=input_tensor, weights='imagenet', include_top=False)
+    @staticmethod
+    def _get_top_model(input_shape, activation="softmax", load_weights=None):
+        top_model = km.Sequential()
+        top_model.add(kl.Flatten(input_shape=input_shape[1:]))
+        top_model.add(kl.Dense(cst.IMG_WIDTH, activation='relu'))
+        top_model.add(kl.Dropout(0.5))
+        top_model.add(kl.Dense(len(cst.CAR_BODY_TYPES), activation=activation))
 
-        for layer in base_model.layers:
+        if load_weights:
+            top_model.load_weights(cst.path_top_model_weights)
+
+        return top_model
+
+    @staticmethod
+    def _get_base_model(m, input_shape=cst.IMG_SHAPE):
+        base_model = m(input_shape=input_shape, include_top=False, weights='imagenet')
+        return base_model
+
+    def _get_assembled_model(self, load_weights=False, load_weights_top_model=True):
+        base_model = self._get_base_model(self.base_model_class)
+
+        for layer in base_model.layers[:-1]:
             layer.trainable = False
 
-        x = base_model.output
-        x = kl.GlobalAveragePooling2D(data_format='channels_last')(x)
-        x = kl.Dropout(0.5)(x)
-        x = kl.Dense(len(cst.CAR_BODY_TYPES), activation=output_fct)(x)
+        # get the output dimension for the base_model prediction
+        img_rdn = np.random.random(cst.IMG_SHAPE)
+        #     img_rdn = np.expand_dims(img_rdn, axis=0) # ajout d'une nouvelle dimension avec un 1
+        img_rdn = img_rdn[np.newaxis, :, :, :]  # ajout d'une nouvelle dimension avec un None
+        dim = base_model.predict(img_rdn).shape
 
-        updated_model = tf.keras.Model(base_model.input, x)
+        print("\n\n##################################")
+        print("modèle utilisé : ", base_model.name)
+        print("##################################\n\n")
 
-        self.model = updated_model
+        top_model = self._get_top_model(dim, load_weights=load_weights_top_model)
+        for layer in top_model.layers[:-1]:
+            layer.trainable = False
+
+        assembled_model = km.Model(inputs=base_model.input,
+                                   outputs=top_model(base_model.output),
+                                   name=base_model.name + "-fine-tuned")
+        if load_weights:
+            assembled_model.load_weights(cst.path_assembled_weights)
+
+        self.model = assembled_model
 
     def summary_model(self):
         self.model.summary()
 
-    def format_img(self, img_path):
+    @staticmethod
+    def format_img(img_path):
         img = kpi.load_img(img_path).resize((cst.IMG_HEIGHT, cst.IMG_WIDTH))
-        x = kpi.img_to_array(img)
-        x = np.expand_dims(x, axis=0)
-        y = self.model.predict(x)
-
-    def predict_model(self, x):
-        return self.model.predict(x)
-
-    def load_weights(self):
-        self.model.load_weights(self.WEIGHTS_PATH)
+        x = kpi.img_to_array(img) / 255
+        # x = np.expand_dims(x, axis=0)
+        x = x[np.newaxis, :, :, :]
+        return x
 
     """
-    Evaluate the model and returns the loss and the accuracy
+    Return a list of prediction for a list of image paths.
+    each prediction is an array of size=class number
     """
 
-    def evaluate_model(self, test_images, test_labels, verbose=2):
-        loss, acc = self.model.evaluate(test_images, test_labels, verbose=verbose)
-        print("Restored model, accuracy: {:5.2f}%".format(100 * acc))
-        return loss, acc
+    def predict(self, img_paths):
+        img_paths = list(img_paths)
+        predictions = []
 
-    def _compile_model(self):
-        self.model.compile(optimizer='rmsprop',
-                           loss='binary_crossentropy',
-                           metrics=['accuracy'])
+        for img_path in img_paths:
+            img_formatted = self.format_img(img_path)
+            predictions.append(self.model.predict(img_formatted))
+
+        return predictions
+
+    """
+    Return a list of CO2 rejection in output for a list of img_paths in input.
+    For each image, if we can't determine precisely the body type car, we chose the global average calculted with
+    the car sells and the body type car rejections (source: ADEME.FR)
+    """
+
+    def get_co2(self, img_paths):
+        predictions = self.predict(img_paths)
+        rejections = []
+
+        for img_pred in predictions:
+            # if the best prediction is under the threshold, we take the average computed
+            if np.max(img_pred) < self.threshold:
+                rejections.append(cst.AVERAGE_REJECTION)
+            else:
+                num_class = np.argmax(img_pred)
+                class_name = cst.CAR_BODY_TYPES[num_class]
+                rejection = cst.REJECTIONS[class_name]
+                rejections.append(rejection)
+
+        return rejections
