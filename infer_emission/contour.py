@@ -1,3 +1,5 @@
+from PIL import Image
+
 class Contour:
     """
         Contour(frame_id=int, contour_id=int, pos=int, vehicle_type=string)
