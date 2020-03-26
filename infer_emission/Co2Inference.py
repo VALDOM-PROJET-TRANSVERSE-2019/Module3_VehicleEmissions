@@ -105,11 +105,12 @@ class Co2Inference:
         for img_path in img_paths:
             img_formatted = self.format_img(img_path)
             predictions.append(self.model.predict(img_formatted))
+        print(predictions)
 
         return predictions
 
     """
-    Return a list of CO2 rejection in output for a list of img_paths in input.
+    Return a list of CO2 rejection and a list of car body types detected in output for a list of img_paths in input.
     For each image, if we can't determine precisely the body type car, we chose the global average calculted with
     the car sells and the body type car rejections (source: ADEME.FR)
     """
@@ -117,15 +118,26 @@ class Co2Inference:
     def get_co2(self, img_paths):
         predictions = self.predict(img_paths)
         rejections = []
+        car_body_types = []
 
         for img_pred in predictions:
             # if the best prediction is under the threshold, we take the average computed
             if np.max(img_pred) < self.threshold:
                 rejections.append(cst.AVERAGE_REJECTION)
+                car_body_types.append(None)
             else:
                 num_class = np.argmax(img_pred)
                 class_name = cst.CAR_BODY_TYPES[num_class]
+                car_body_types.append(class_name)
                 rejection = cst.REJECTIONS[class_name]
                 rejections.append(rejection)
 
-        return rejections
+        return rejections, car_body_types
+
+
+if __name__ == '__main__':
+    co2infer = Co2Inference()
+    img_path = cst.path_data_train + '/cabriolet/0150.jpg'
+    rejections, car_body_types = co2infer.get_co2([img_path])
+    print(rejections)
+    print(car_body_types)

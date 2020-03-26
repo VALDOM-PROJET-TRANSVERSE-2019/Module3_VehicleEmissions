@@ -25,7 +25,7 @@ SELLS = {'berline': 49.43,
               'tous-terrains': 38.29}
 
 # Threshold under which we take the global rejection average
-ACC_THRESHOLD = 0.5
+ACC_THRESHOLD = 0.3
 # The rejection average computed from ADEME.FR dataset (sells and rejections for each body type)
 AVERAGE_REJECTION = 113
 
