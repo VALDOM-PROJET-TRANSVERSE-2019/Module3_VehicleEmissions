@@ -18,8 +18,6 @@ class Co2Inference:
     Input: A cropped image on which a single car is visible
     Output: An array of prediction (length = class number)
     """
-    WEIGHTS_PATH = "data/pretrained_weights/weights_model_ResNet50V2_fully_connected_model_5_epochs_1_batch_size.h5"
-
     def __init__(self):
         # due to error : failed to initialize cudnn
         self.config = ConfigProto()
