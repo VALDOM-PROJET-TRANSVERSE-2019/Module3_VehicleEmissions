@@ -94,16 +94,24 @@ class Co2Inference:
         return x
 
     """
-    Return a list of prediction for a list of image paths.
-    each prediction is an array of size=class number
+    Return a list of predictions for a list of image paths.
+    each prediction is an array of size=class number.
+    imgs:parameter  can be:
+        - a list of paths, in this case the images are loaded with pillow (PIl format) and formatted. In this case, you
+        must set is_img_formatted to False (default value)
+        - a list of images already formatted and in PIL format. In this case, you
+        must set is_img_formatted to True
     """
 
-    def predict(self, img_paths):
-        img_paths = list(img_paths)
+    def predict(self, imgs, is_img_formatted=False):
+        imgs = list(imgs)
         predictions = []
 
-        for img_path in img_paths:
-            img_formatted = self.format_img(img_path)
+        for img_path in imgs:
+            if is_img_formatted is False:
+                img_formatted = self.format_img(img_path)
+            else:
+                img_formatted = imgs
             predictions.append(self.model.predict(img_formatted))
         print(predictions)
 
@@ -115,8 +123,8 @@ class Co2Inference:
     the car sells and the body type car rejections (source: ADEME.FR)
     """
 
-    def get_co2(self, img_paths):
-        predictions = self.predict(img_paths)
+    def get_co2(self, img_paths, is_img_formatted=False):
+        predictions = self.predict(img_paths, is_img_formatted)
         rejections = []
         car_body_types = []
 

@@ -142,5 +142,3 @@ gen
 # weights file too large
 /data/pretrained_features/bottleneck_features_train.npy
 /data/pretrained_features/bottleneck_features_val.npy
-/data/pretrained_weights/*.data*
-/data/pretrained_weights/*.index
